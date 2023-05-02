@@ -10,8 +10,9 @@ final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final authRepository = AuthRepositoryImpl();
   final keyValueStorageService = KeyValueStorageServiceImpl();
   return AuthNotifier(
-      authRepository: authRepository,
-      keyValueStorageService: keyValueStorageService);
+    authRepository: authRepository,
+    keyValueStorageService: keyValueStorageService,
+  );
 });
 
 class AuthNotifier extends StateNotifier<AuthState> {
@@ -41,18 +42,29 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  void registeruser(String email, String password) async {}
+  void registerUser(String email, String password) async {}
+
   void checkAuthStatus() async {
     final token = await keyValueStorageService.getValue<String>('token');
-    if (token == null) {
-      return logout();
-    }
+    if (token == null) return logout();
+
     try {
       final user = await authRepository.checkAtuhStatus(token);
       _setLoggedUser(user);
     } catch (e) {
       logout();
     }
+  }
+
+  void _setLoggedUser(User user) async {
+    //TODO Save the token
+    await keyValueStorageService.setKeyValue('token', user.token);
+
+    state = state.copyWith(
+      user: user,
+      authStatus: AuthStatus.authenticated,
+      errorMessage: '',
+    );
   }
 
   Future<void> logout({String? errorMessage}) async {
@@ -62,17 +74,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
       user: null,
       errorMessage: errorMessage,
       authStatus: AuthStatus.notAuthenticated,
-    );
-  }
-
-  void _setLoggedUser(User user) async {
-    //TODO Save the token
-    await keyValueStorageService.setKeyValue('token', user.token);
-
-    state = state.copyWith(
-      user: user,
-      errorMessage: '',
-      authStatus: AuthStatus.authenticated,
     );
   }
 }

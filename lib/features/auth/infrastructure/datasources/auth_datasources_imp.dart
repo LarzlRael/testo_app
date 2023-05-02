@@ -17,7 +17,7 @@ class AuthDatasourcesImp extends AuthDataSource {
     ),
   );
   @override
-  Future<User> checkAtuhStatus(String token) async {
+  Future<User> checkAuthStatus(String token) async {
     try {
       final response = await dio.get(
         '/auth/check-status',
