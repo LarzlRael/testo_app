@@ -1,26 +1,67 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:teslo_shop/config/router/app_router_notifider.dart';
 import 'package:teslo_shop/features/auth/auth.dart';
+import 'package:teslo_shop/features/auth/provider/auth_provider.dart';
 import 'package:teslo_shop/features/products/products.dart';
 
-final appRouter = GoRouter(
-  initialLocation: '/',
-  routes: [
+final goRouterProvider = Provider((ref) {
+  final goRouterNotifier = ref.read(goRouterNotifierProvider);
 
-    ///* Auth Routes
-    GoRoute(
-      path: '/login',
-      builder: (context, state) => const LoginScreen(),
-    ),
-    GoRoute(
-      path: '/register',
-      builder: (context, state) => const RegisterScreen(),
-    ),
+  return GoRouter(
+    initialLocation: '/splash',
+    refreshListenable: goRouterNotifier,
+    routes: [
+      ///* Primera pantalla
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const CheckAuthStatusScreen(),
+      ),
 
-    ///* Product Routes
-    GoRoute(
-      path: '/',
-      builder: (context, state) => const ProductsScreen(),
-    ),
-  ],
-  ///! TODO: Bloquear si no se está autenticado de alguna manera
-);
+      ///* Auth Routes
+      GoRoute(
+        path: '/login',
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => const RegisterScreen(),
+      ),
+
+      ///* Product Routes
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const ProductsScreen(),
+      ),
+      GoRoute(
+        path: '/product/:id',
+        builder: (context, state) => ProductScreen(
+          productId: state.params['id'] ?? 'no-id',
+        ),
+      ),
+    ],
+    redirect: (context, state) {
+      final isGoingTo = state.subloc;
+      final authStatus = goRouterNotifier.authStatus;
+      print('GoRouter authStatus: $authStatus, isGoingTo: $isGoingTo');
+      if (isGoingTo == '/splash' && authStatus == AuthStatus.checking)
+        return null;
+
+      if (authStatus == AuthStatus.notAuthenticated) {
+        if (isGoingTo == '/login' || isGoingTo == '/register') return null;
+
+        return '/login';
+      }
+
+      if (authStatus == AuthStatus.authenticated) {
+        if (isGoingTo == '/login' ||
+            isGoingTo == '/register' ||
+            isGoingTo == '/splash') {
+          return '/';
+        }
+      }
+
+      return null;
+    },
+  );
+});
