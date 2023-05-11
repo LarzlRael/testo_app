@@ -1,23 +1,29 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:formz/formz.dart';
 import 'package:teslo_shop/contants/enviroment.dart';
+import 'package:teslo_shop/features/products/presentation/providers/product_repository_provider.dart';
 
 import '../../../../infrastructure/inputs/inputs.dart';
 import '../../../domain/entities/product.dart';
+import '../products_provider.dart';
 
 final productFormProvider = StateNotifierProvider.autoDispose
     .family<ProductFormNotifer, ProductoFormState, Product>(
   (ref, product) {
-    /* TODO: createUpdatedCallback */
+    /* final createUpdateCallback =
+        ref.watch(productsRepositoryProvider).createUpdateProduct; */
+/* THis is from the products provider */
+    final createUpdateCallback =
+        ref.watch(productsProvider.notifier).createUpdateProduct;
     return ProductFormNotifer(
-      /* TODO: onSubmitCallback */
       product: product,
+      onSubmittedCallback: createUpdateCallback,
     );
   },
 );
 
 class ProductFormNotifer extends StateNotifier<ProductoFormState> {
-  final void Function(Map<String, dynamic>)? onSubmittedCallback;
+  final Future<bool> Function(Map<String, dynamic>)? onSubmittedCallback;
 
   ProductFormNotifer({
     this.onSubmittedCallback,
@@ -93,7 +99,7 @@ class ProductFormNotifer extends StateNotifier<ProductoFormState> {
     );
   }
 
-  void onSizedChanged(List<String> sizes) {
+  void onSizeChanged(List<String> sizes) {
     state = state.copyWith(
       size: sizes,
     );
@@ -136,7 +142,7 @@ class ProductFormNotifer extends StateNotifier<ProductoFormState> {
     if (onSubmittedCallback == null) return false;
 
     final productLike = {
-      'id': state.id,
+      'id': state.id == 'new' ? null : state.id,
       'title': state.title.value,
       'slug': state.slug.value,
       'price': state.price.value,
@@ -150,8 +156,11 @@ class ProductFormNotifer extends StateNotifier<ProductoFormState> {
               image.replaceAll('${Enviroment.apiUrl}/files/product/', ''))
           .toList(),
     };
-    return true;
-    /* TODO  */
+    try {
+      return await onSubmittedCallback!(productLike);
+    } catch (e) {
+      return false;
+    }
   }
 }
 

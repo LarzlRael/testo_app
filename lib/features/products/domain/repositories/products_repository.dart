@@ -7,5 +7,5 @@ abstract class ProductsRepository {
 
   Future<Product> searchProdcutByTerm(String term);
 
-  Future<Product> createUpdateProducto(Map<String, dynamic> productLike);
+  Future<Product> createUpdateProduct(Map<String, dynamic> productLike);
 }

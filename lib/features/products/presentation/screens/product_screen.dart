@@ -4,32 +4,52 @@ import 'package:teslo_shop/features/products/presentation/providers/providers.da
 
 import '../../../shared/shared.dart';
 import '../../domain/domain.dart';
-import '../providers/product_provider.dart';
 
 class ProductScreen extends ConsumerWidget {
   final String productId;
+
   const ProductScreen({
     super.key,
     required this.productId,
   });
 
+  void showSnackbar(BuildContext context) {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Producto Actualizado')),
+    );
+  }
+
   @override
   Widget build(BuildContext context, ref) {
     final productState = ref.watch(productProvider(productId));
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Editar Producto'),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(productId == null ? 'Editar Producto' : 'Nuevo Producto'),
+        ),
+        floatingActionButton: FloatingActionButton(
+          /* label: const Text('Guardar'), */
+          child: const Icon(Icons.save_as_outlined),
+          onPressed: () {
+            if (productState.product == null) return;
+
+            ref
+                .read(productFormProvider(productState.product!).notifier)
+                .onFormSubmit()
+                .then((value) {
+              if (!value) return;
+              showSnackbar(context);
+            });
+          },
+        ),
+        body: productState.isLoading
+            ? const FullscreenLoader()
+            : _ProductView(
+                product: productState.product!,
+              ),
       ),
-      floatingActionButton: FloatingActionButton(
-        /* label: const Text('Guardar'), */
-        child: const Icon(Icons.save_as_outlined),
-        onPressed: () {},
-      ),
-      body: productState.isLoading
-          ? const FullscreenLoader()
-          : _ProductView(
-              product: productState.product!,
-            ),
     );
   }
 }
@@ -57,6 +77,7 @@ class _ProductView extends ConsumerWidget {
           child: Text(
             productState.title.value,
             style: textStyles.titleSmall,
+            textAlign: TextAlign.center,
           ),
         ),
         const SizedBox(height: 10),
@@ -72,7 +93,7 @@ class _ProductInformation extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final productState = ref.watch(productFormProvider(product));
+    final productForm = ref.watch(productFormProvider(product));
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -83,52 +104,63 @@ class _ProductInformation extends ConsumerWidget {
           CustomProductField(
             isTopField: true,
             label: 'Nombre',
-            initialValue: productState.title.value,
+            initialValue: productForm.title.value,
             onChanged:
                 ref.read(productFormProvider(product).notifier).onTitleChanged,
-            errorMessage: productState.title.errorMessage,
+            errorMessage: productForm.title.errorMessage,
           ),
           CustomProductField(
             isTopField: true,
             label: 'Slug',
-            initialValue: productState.slug.value,
+            initialValue: productForm.slug.value,
             onChanged:
                 ref.read(productFormProvider(product).notifier).onSlugChanged,
-            errorMessage: productState.slug.errorMessage,
+            errorMessage: productForm.slug.errorMessage,
           ),
           CustomProductField(
               isBottomField: true,
               label: 'Precio',
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
-              initialValue: productState.price.value.toString(),
+              initialValue: productForm.price.value.toString(),
               onChanged: (value) => ref
                   .read(productFormProvider(product).notifier)
                   .onPriceChanged(
                     double.tryParse(value) ?? -1,
                   ),
-              errorMessage: productState.title.errorMessage),
+              errorMessage: productForm.title.errorMessage),
           const SizedBox(height: 15),
           const Text('Extras'),
-          _SizeSelector(selectedSizes: product.sizes),
+          _SizeSelector(
+            selectedSizes: productForm.sizes,
+            onSizesChanged:
+                ref.read(productFormProvider(product).notifier).onSizeChanged,
+          ),
           const SizedBox(height: 5),
-          _GenderSelector(selectedGender: product.gender),
+          _GenderSelector(
+            selectedGender: productForm.gender,
+            onGenderChanged:
+                ref.read(productFormProvider(product).notifier).onGenderChanged,
+          ),
           const SizedBox(height: 15),
           CustomProductField(
               isTopField: true,
               label: 'Existencias',
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
-              initialValue: productState.inStock.value.toString(),
+              initialValue: productForm.inStock.value.toString(),
               onChanged: (value) => ref
                   .read(productFormProvider(product).notifier)
                   .onStockChanged(int.tryParse(value) ?? -1),
-              errorMessage: productState.inStock.errorMessage),
+              errorMessage: productForm.inStock.errorMessage),
           CustomProductField(
             maxLines: 6,
             label: 'Descripción',
             keyboardType: TextInputType.multiline,
             initialValue: product.description,
+            onChanged: ref
+                .read(productFormProvider(product).notifier)
+                .onDescriptionChanged,
           ),
           CustomProductField(
             isBottomField: true,
@@ -136,6 +168,8 @@ class _ProductInformation extends ConsumerWidget {
             label: 'Tags (Separados por coma)',
             keyboardType: TextInputType.multiline,
             initialValue: product.tags.join(', '),
+            onChanged:
+                ref.read(productFormProvider(product).notifier).onTagsChanged,
           ),
           const SizedBox(height: 100),
         ],
@@ -148,11 +182,16 @@ class _SizeSelector extends StatelessWidget {
   final List<String> selectedSizes;
   final List<String> sizes = const ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
 
-  const _SizeSelector({required this.selectedSizes});
+  final Function(List<String> selectedSized) onSizesChanged;
+  const _SizeSelector({
+    required this.selectedSizes,
+    required this.onSizesChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
     return SegmentedButton(
+      emptySelectionAllowed: true,
       showSelectedIcon: false,
       segments: sizes.map((size) {
         return ButtonSegment(
@@ -161,7 +200,10 @@ class _SizeSelector extends StatelessWidget {
       }).toList(),
       selected: Set.from(selectedSizes),
       onSelectionChanged: (newSelection) {
-        print(newSelection);
+        FocusScope.of(context).unfocus();
+        onSizesChanged(
+          List.from(newSelection),
+        );
       },
       multiSelectionEnabled: true,
     );
@@ -170,14 +212,19 @@ class _SizeSelector extends StatelessWidget {
 
 class _GenderSelector extends StatelessWidget {
   final String selectedGender;
+
   final List<String> genders = const ['men', 'women', 'kid'];
   final List<IconData> genderIcons = const [
     Icons.man,
     Icons.woman,
     Icons.boy,
   ];
+  final void Function(String selectedGender) onGenderChanged;
 
-  const _GenderSelector({required this.selectedGender});
+  const _GenderSelector({
+    required this.selectedGender,
+    required this.onGenderChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -185,6 +232,7 @@ class _GenderSelector extends StatelessWidget {
       child: SegmentedButton(
         multiSelectionEnabled: false,
         showSelectedIcon: false,
+        emptySelectionAllowed: true,
         style: const ButtonStyle(visualDensity: VisualDensity.compact),
         segments: genders.map((size) {
           return ButtonSegment(
@@ -194,7 +242,9 @@ class _GenderSelector extends StatelessWidget {
         }).toList(),
         selected: {selectedGender},
         onSelectionChanged: (newSelection) {
-          print(newSelection);
+          onGenderChanged(
+            newSelection.first,
+          );
         },
       ),
     );
