@@ -41,7 +41,9 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
     const borderRadius = Radius.circular(15);
 
     return Container(
-      // padding: const EdgeInsets.only(bottom: 0, top: 15),
+      padding: const EdgeInsets.only(
+        bottom: 8,
+      ),
       decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: const BorderRadius.only(
