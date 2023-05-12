@@ -36,7 +36,6 @@ class ProductScreen extends ConsumerWidget {
                 final photoPath =
                     await CamerGalleryServiceImp().selectFromGallery();
                 if (photoPath == null) return;
-                photoPath;
                 ref
                     .read(productFormProvider(productState.product!).notifier)
                     .updateProductImage(photoPath);
@@ -46,10 +45,12 @@ class ProductScreen extends ConsumerWidget {
               ),
             ),
             IconButton(
-              onPressed: () {
-                final photoPath = CamerGalleryServiceImp().takePhoto();
+              onPressed: () async {
+                final photoPath = await CamerGalleryServiceImp().takePhoto();
                 if (photoPath == null) return;
-                photoPath;
+                ref
+                    .read(productFormProvider(productState.product!).notifier)
+                    .updateProductImage(photoPath);
               },
               icon: const Icon(
                 Icons.camera_alt_outlined,
