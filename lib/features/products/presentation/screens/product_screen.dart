@@ -40,9 +40,7 @@ class ProductScreen extends ConsumerWidget {
                     .read(productFormProvider(productState.product!).notifier)
                     .updateProductImage(photoPath);
               },
-              icon: const Icon(
-                Icons.photo_library_outlined,
-              ),
+              icon: const Icon(Icons.photo_library_outlined),
             ),
             IconButton(
               onPressed: () async {
@@ -52,9 +50,7 @@ class ProductScreen extends ConsumerWidget {
                     .read(productFormProvider(productState.product!).notifier)
                     .updateProductImage(photoPath);
               },
-              icon: const Icon(
-                Icons.camera_alt_outlined,
-              ),
+              icon: const Icon(Icons.camera_alt_outlined),
             )
           ],
         ),
@@ -99,7 +95,14 @@ class _ProductView extends ConsumerWidget {
         SizedBox(
           height: 250,
           width: 600,
-          child: _ImageGallery(images: productState.images),
+          child: _ImageGallery(
+            images: productState.images,
+            deleteImage: (xd) {
+              widgetRef
+                  .read(productFormProvider(product).notifier)
+                  .removeImage(xd);
+            },
+          ),
         ),
         const SizedBox(height: 10),
         Center(
@@ -282,9 +285,10 @@ class _GenderSelector extends StatelessWidget {
 
 class _ImageGallery extends StatelessWidget {
   final List<String> images;
-
+  final Function(String image) deleteImage;
   const _ImageGallery({
     required this.images,
+    required this.deleteImage,
   });
 
   @override
@@ -308,16 +312,32 @@ class _ImageGallery extends StatelessWidget {
         }
 
         return Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 10,
-          ),
-          child: ClipRRect(
-            borderRadius: const BorderRadius.all(Radius.circular(20)),
-            child: FadeInImage(
-              image: imageProvider,
-              placeholder: const AssetImage('assets/loaders/bottle-loader.gif'),
-              fit: BoxFit.cover,
-            ),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Stack(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.all(Radius.circular(20)),
+                child: FadeInImage(
+                  image: imageProvider,
+                  placeholder:
+                      const AssetImage('assets/loaders/bottle-loader.gif'),
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Positioned(
+                top: 0,
+                right: 0,
+                child: IconButton(
+                    onPressed: () {
+                      deleteImage(image);
+                    },
+                    icon: Icon(
+                      Icons.cancel,
+                      color: Colors.grey[300],
+                      size: 30,
+                    )),
+              ),
+            ],
           ),
         );
       }).toList(),

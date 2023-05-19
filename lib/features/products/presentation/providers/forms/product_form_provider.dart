@@ -57,6 +57,12 @@ class ProductFormNotifer extends StateNotifier<ProductoFormState> {
     );
   }
 
+  void removeImage(String image) {
+    state = state.copyWith(
+      images: List.from(state.images)..removeWhere((img) => img == image),
+    );
+  }
+
   void onPriceChanged(double value) {
     state = state.copyWith(
       price: Price.dirty(value),

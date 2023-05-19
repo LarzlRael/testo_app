@@ -13,22 +13,32 @@ class AppTheme {
 
       ///* Texts
       textTheme: TextTheme(
-          titleLarge: GoogleFonts.montserratAlternates()
-              .copyWith(fontSize: 40, fontWeight: FontWeight.bold),
-          titleMedium: GoogleFonts.montserratAlternates()
-              .copyWith(fontSize: 30, fontWeight: FontWeight.bold),
-          titleSmall:
-              GoogleFonts.montserratAlternates().copyWith(fontSize: 20)),
+        titleLarge: GoogleFonts.montserratAlternates().copyWith(
+          fontSize: 40,
+          fontWeight: FontWeight.bold,
+        ),
+        titleMedium: GoogleFonts.montserratAlternates().copyWith(
+          fontSize: 30,
+          fontWeight: FontWeight.bold,
+        ),
+        titleSmall: GoogleFonts.montserratAlternates().copyWith(
+          fontSize: 20,
+        ),
+      ),
 
       ///* Scaffold Background Color
       scaffoldBackgroundColor: scaffoldBackgroundColor,
 
       ///* Buttons
       filledButtonTheme: FilledButtonThemeData(
-          style: ButtonStyle(
-              textStyle: MaterialStatePropertyAll(
-                  GoogleFonts.montserratAlternates()
-                      .copyWith(fontWeight: FontWeight.w700)))),
+        style: ButtonStyle(
+          textStyle: MaterialStatePropertyAll(
+            GoogleFonts.montserratAlternates().copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
 
       ///* AppBar
       appBarTheme: AppBarTheme(
